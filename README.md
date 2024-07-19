@@ -98,5 +98,20 @@
         * *Embedding* - The vector that represent the embedding of the word
         * These *Embedding* are extracted using the *CLIP* text Encoder
             * Allows to connect the text with images
-         
+        * Loss funcition , with diagonal with maximum value and the other numbers to be `zero`
+        * Model learnt , how to combine the description of the image with the image itseld
+        * Use the trained encoder , of the *CLIP* and these embeddings could be used as **Conditioning Signal** for our Unet to **denoise** into what we want
+    * **Limitation of Unet**
+        * If the image is too large (512*512) , we have to compute very big matrix , very slow
+        * Compress the image into something **Smaller** , using the **Variational Auto Encoder**
+    * **Latenet Diffusion Model**
+        * The **Stable Diffusion** is also called as **Latent Diffusion Model**
+        * As we dont learn the data , but we learn the *latent representation of the data*
+        * We compress the data , smaller, and learn the *compressed verison* of the data
+        * And rebuild it from the compressed version to build the required output
+            * Example - Send the file as **Zip and UnZip** the file at the reciving end (intution of auto encoder)
+            * The latent space , through decoder , to build it back
+            * More the noise you add , more you can change the Unet model
+            * Less noise , less is were able to change our model
+
     
