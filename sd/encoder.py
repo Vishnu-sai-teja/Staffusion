@@ -4,14 +4,13 @@ from torch.nn import functional as F
 
 class VAE_Encoder(nn.Sequential) :
     def __init__(self) :
-        super(VAE_Encoder,self).__init__(
+        super(VAE_Encoder,self).__init__ (
             '''
                 In this convolution we convert the image , with 3 channels into representation of 128 features for pixel
                 (BatchSize , Channel = 3 , Height , Width) -> (BatchSize , 128 , Height , Width)
                 with padding as 1 , the shape of the image , height and width remain constannt
             '''
-            nn.Conv3d(3,128,kernel_size=3,padding=1),
-
+            nn.Conv2d(3, 128, kernel_size=3, padding=1),
             '''
                 Next if the residula block , which convert the 128 channels to 128 channels , but not change the size of the image
                 Combination of convolutions + normlaizations
@@ -28,7 +27,7 @@ class VAE_Encoder(nn.Sequential) :
                 * kernel - is the convolution layer
                 (BatchSize,128,Height,Width) -> (BatchSize , 128,Height/2,Width/2)
             '''
-            nn.Conv3d(128,128,kernel_size = 3 , stride = 2 , padding = 0),
+            nn.Conv3d(128, 128, kernel_size=3, stride=2, padding=0),
             '''
                 Again 2 more residual block after the convoltuion
                 Increate the feature size in this case of the residual
@@ -113,7 +112,7 @@ class VAE_Encoder(nn.Sequential) :
             nn.Conv3d(8,8,kernel_size = 1,padding = 0)
         )
 
-    def forward(self,x : torch.Tensor ,noise:torch.Tensor)
+    def forward(self,x : torch.Tensor ,noise:torch.Tensor) :
         '''
             X - Image we want to encode 
                 (BatchSize , 3, Height,Width)
@@ -157,9 +156,17 @@ class VAE_Encoder(nn.Sequential) :
         stdDeviation = variance.sqrt()
 
         '''
-            Sample from the 
+            Sample from the mean and variance we learn , how ?
+                * We have the noise N(0,1) , we have to sample from this with given mean and varaice N(mean,varaince)
+            z = N(0,1) -> N(mean,variance) by using
+                * X = mean + stddeviation * z (sample from this distribution) 
         '''
+        x = mean + stdDeviation*noise
         
+        #Scale the output by  a constance - even i dont understand why we are doing but it is just a scaling constant
+        x *= 0.18215
+
+        return x
 
 
         
