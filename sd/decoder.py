@@ -101,3 +101,79 @@ class VAE_Residual(nn.Module) :
         x = self.conv2(x)
 
         return x + self.residualLayer(self.residue)
+    
+
+class VAE_Decoder(nn.Sequential) : 
+
+    def __init__(self) :
+        super().__init__(
+            # Start with the final diminished size after the encoding of the VAE
+
+            # (BatchSize , 4 , Height / 8 , width / 8)
+            nn.Conv2d(4,4,kernel_size = 1 , padding = 0),
+
+            nn.Conv2d(4, 512 ,kernel_size = 3 , padding = 1),
+
+            VAE_Residual(512,512),
+
+            VAE_Attention(512),
+
+            # Three residual blocks
+
+            VAE_Residual(512,512),
+            VAE_Residual(512,512),
+            VAE_Residual(512,512), 
+
+            # (BatchSize , 512 , Height/8 , Width/ 8) -> # (BatchSize , 512 , Height/8 , Width/ 8)
+
+            VAE_Residual(512,512),
+
+            # To increase the dimensions of the image , we have to upsample the depth map , which is the usampling the image , will replicate the pixels double , for intutiton .
+
+            # (BatchSize , 512 , Height/8 , width / 8 ) -> # (BatchSize , 512 , Height/4 , Width / 4)    
+            nn.Upsample(scale_factor = 2),
+
+            nn.Conv2d(512,512 , kernel_size = 3 , padding = 1),
+
+            VAE_Residual(512,512),
+            VAE_Residual(512,512),
+            VAE_Residual(512,512),
+
+            # (BatchSize , 512  , Height/4, Width/ 4) -> (Batchsize , 512 , Height/2 , Width/2)
+            nn.Upsample(scale_factor=2),
+
+            nn.Conv2d(512 , 512 , kernel_size = 3 , padding = 1),
+
+            VAE_Residual(512,256),
+            VAE_Residual(256,256),
+            VAE_Residual(256,256),
+
+            #(Batchsize , 256 , Height/2 , Width/2) -> (Batchsize ,2562 , Height , Width)
+            nn.Upsample(scale_factor=2),
+
+            nn.Conv2d(256 , 256 , kernel_size = 3 , padding = 1),
+
+            VAE_Residual(256,128),
+            VAE_Residual(128,128),
+            VAE_Residual(128,128),
+
+            # Grop Normalization
+            nn.GroupNorm(32 , 128),
+
+            nn.SiLu(),
+
+            # (BatchSize , 128 , Heigth ,Width) -> (BatchSize , 3 , Height , Width)
+            nn.Conv2d(128 , 3 ,kernel_size = 3 , padding = 1)
+        )
+
+    def forward(self , x : torch.Tensor) -> torch.Tensor :
+        # (BathcSize , 4 , Height/8 , Width/8) - Incase of encoder we scale by a constant , so we nullify the scaling
+
+        x /= 0.1815
+
+        for module in self :
+            x = module(x)
+
+        # (BatchSize , 3 , Height , Width)
+        return x            
+
